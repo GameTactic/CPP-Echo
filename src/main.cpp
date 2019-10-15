@@ -37,13 +37,21 @@ int main() {
 
     try {
         // Set logging settings
-        _server.set_access_channels(websocketpp::log::alevel::all);
-        _server.clear_access_channels(websocketpp::log::alevel::frame_payload);
+        _server.set_access_channels(websocketpp::log::alevel::none);
+        _server.clear_access_channels(websocketpp::log::alevel::none);
         _server.init_asio();
 
         // Message handler
         _server.set_message_handler(bind(&on_message,&_server,::_1,::_2));
         _server.listen(80);
+
+	// Tell something :)
+	std::cout << "Starting GameTactic CPP Echo server...\n";
+        std::cout << "--------------------------------------------------------------------------------\n";
+	std::cout << "|                 Copyright 2019 Niko Granö <niko@ironlions.fi>                |\n";
+	std::cout << "|                             Licensed under GPLv3.                            |\n";
+        std::cout << "|                             https://gametactic.eu                            |\n";
+	std::cout << "--------------------------------------------------------------------------------\n\n";
 
         // Start the server.
         // First start itself, second start asio.
