@@ -2,6 +2,63 @@
 
 This is used as echoing pings and data in the room.
 
+## Usage
+
+### Docker
+
+To start server, run.
+` docker run -p 80:80 gametactic/cpp-echo`
+
+Docker image is very minimal and currently it's size is under 5MB!
+
+### From Sources
+
+
+Requirements: 
+
+ - libboost
+ - cmake
+ - gcc
+ - websocketspp
+
+To build server itself, run:
+```
+git clone https://github.com/GameTactic/CPP-Echo.git echo
+cd echo
+cmake .
+make -j $(nproc --all) && make install
+```
+
+After this server can be ran by:
+```
+bin/server
+```
+
+Server will automatically bind into port 80.
+
+### Server Usage
+
+To use this server you should open websocket connection to port 80.
+After this have been done, you need to specify room to listen.
+This can be done by sending following data to server:
+
+```
+join:xxxx
+```
+
+In response you should get:
+
+```json
+{"success":"Room xxxx selected."}
+```
+
+If you try send message without first specifying room, you will get:
+```json
+{"error":"No room selected."}
+```
+
+Any futher messages sent after room selection will be just echo to everybody.
+
 ## Contributing
 
 1. Fork it!
