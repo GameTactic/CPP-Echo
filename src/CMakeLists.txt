@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.2)
+project(cppecho)
+set(SOURCE_FILES main.cpp)
+add_executable(server ${SOURCE_FILES})
+install(TARGETS server DESTINATION ${SERVER_INSTALL_BIN_DIR})
