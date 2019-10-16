@@ -12,7 +12,7 @@ struct connection_data {
 struct custom_config : public websocketpp::config::asio {
     // Default settings from our core config
     typedef websocketpp::config::asio core;
-    
+
     typedef core::concurrency_type concurrency_type;
     typedef core::request_type request_type;
     typedef core::response_type response_type;
@@ -24,7 +24,7 @@ struct custom_config : public websocketpp::config::asio {
     typedef core::rng_type rng_type;
     typedef core::transport_type transport_type;
     typedef core::endpoint_base endpoint_base;
-    
+
     // Set a custom connection_base class to handle indetification.
     typedef connection_data connection_base;
 };
@@ -133,10 +133,6 @@ private:
 
     // Every client has own id to help identify.
     int _session;
-
-    // Rooms
-    //std::map<int, string::string> _rooms;
-    //std::vector<std::map<std::string, std::string>> _rooms;
 };
 
 // Basic signal hander
