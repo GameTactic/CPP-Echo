@@ -43,9 +43,9 @@ deploy-eu:
     name: production_eu
     url: https://eu.gametactic.eu
   script:
-    - ssh-keyscan -t rsa $HOST_EU > ~/.ssh/known_hosts
+    - ssh-keyscan -t rsa $HOST_EU > ~/.ssh/known_hosts 2> /dev/null
     - >
-      ssh deployer@$HOST_EU "
+      ssh -o LogLevel=ERROR deployer@$HOST_EU "
       sudo eu/echo/sbin/update
       "
   dependencies:
