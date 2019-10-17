@@ -45,7 +45,7 @@ deploy-eu:
   script:
     - ssh-keyscan -t rsa $HOST_EU > ~/.ssh/known_hosts
     - >
-      ssh $HOST_EU "
+      ssh deployer@$HOST_EU "
       whoami
       "
   dependencies:
