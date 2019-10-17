@@ -46,9 +46,10 @@ deploy-eu:
     - ssh-keyscan -t rsa $HOST_EU > ~/.ssh/known_hosts
     - >
       ssh deployer@$HOST_EU "
-      whoami
+      eu/echo/sbin/update
       "
   dependencies:
     - docker-build-master
+  when: manual
   only:
     - master
