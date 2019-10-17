@@ -49,7 +49,7 @@ deploy-eu:
       sudo eu/echo/sbin/update
       "
   dependencies:
-    - docker-build-master
+    - build-master
   when: manual
   only:
     - master
