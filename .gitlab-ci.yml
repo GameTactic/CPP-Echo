@@ -46,7 +46,7 @@ deploy-eu:
     - ssh-keyscan -t rsa $HOST_EU > ~/.ssh/known_hosts 2> /dev/null
     - >
       ssh -o LogLevel=ERROR deployer@$HOST_EU "
-      sudo eu/echo/sbin/update
+      doas eu/echo/sbin/update
       "
   dependencies:
     - build-master
