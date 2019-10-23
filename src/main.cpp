@@ -44,7 +44,7 @@ using websocketpp::lib::bind;
 class EchoServer
 {
 public:
-    EchoServer()
+    EchoServer(int port = 80)
     {
         // Try to not fail. Please. I have faith on you.
             // Set logging settings
@@ -56,7 +56,7 @@ public:
             _server.set_open_handler(bind(&EchoServer::onOpen,this,::_1));
             _server.set_close_handler(bind(&EchoServer::onClose,this,::_1));
             _server.set_message_handler(bind(&EchoServer::onMessage,this,::_1,::_2));
-            _server.listen(80);
+            _server.listen(port);
 
             // Tell something :)
             std::cout << "Starting GameTactic CPP Echo server...\n";
@@ -175,6 +175,6 @@ int main(int argc, char* argv[]) {
     }
 
     // Start app.
-    EchoServer srv;
+    EchoServer srv(port);
     srv.run();
 }
