@@ -151,12 +151,8 @@ private:
 
 // Basic signal hander
 void signalHandler( int signum ) {
-    static char message[] = "Interrupt signal ( XX ) received.\n";
-    int hi = signum / 10;
-    int lo = signum % 10;
-    message[19] = (hi == 0 ) ? ' ' : char('0' + hi);
-    message[20] = char('0' + lo);
-    write(STDOUT_FILENO, message, sizeog(message));
+   std::cout << "Interrupt signal (" << signum << ") received.\n";
+   exit(signum);
 }
 
 int main() {
