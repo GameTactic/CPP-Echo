@@ -9,6 +9,9 @@ This is used as echoing pings and data in the room.
 To start server, run.
 ` docker run -p 80:80 gametactic/cpp-echo`
 
+To run the server on a non default port
+` docker run -p 80:8080 gametactic/cpp-echo --port 8080`
+
 Docker image is very minimal and currently it's size is under 5MB!
 
 ### From Sources
@@ -25,6 +28,7 @@ To build server itself, run:
 ```
 git clone https://github.com/GameTactic/CPP-Echo.git echo
 cd echo
+git submodule update --init --recursive
 cmake .
 make -j $(nproc --all) && make install
 ```
@@ -35,6 +39,11 @@ bin/server
 ```
 
 Server will automatically bind into port 80.
+
+### Command Line Options
+
+* --port <portNo>    Change the default port the server is listening on (default 80)
+* --help             Display the help text.
 
 ### Server Usage
 
