@@ -47,7 +47,6 @@ public:
     EchoServer()
     {
         // Try to not fail. Please. I have faith on you.
-        try {
             // Set logging settings
             _server.set_access_channels(websocketpp::log::alevel::none);
             _server.clear_access_channels(websocketpp::log::alevel::none);
@@ -66,14 +65,29 @@ public:
             std::cout << "|                 Licensed under GPLv3.                |\n";
             std::cout << "|                 https://gametactic.eu                |\n";
             std::cout << "--------------------------------------------------------\n\n";
-
+    }
+    void run()
+    {
+        try
+        {
             // Start the server.
             _server.start_accept();
             _server.run();
-        } catch (websocketpp::exception const & e) {
-            std::cout << e.what() << std::endl;
-        } catch (...) {
-            std::cout << "Error: " << std::endl;
+        }
+        catch (std::exception const & e) {
+            // catch and report all exceptions.
+            // Note: websocketpp::exception is derived from std::exception so it covers this situation.
+            std::cout << "Exception: " << e.what() << "\n";
+
+            // Re-Throw the exception so application exits and reports the exception.
+            throw;
+        }
+        catch (...) {
+            // catch all other types of exceptions that are not real exceptions.
+            std::cout << "Exception: Unknown\n";
+
+            // Re-Throw the exception so application exits and reports the exception.
+            throw;
         }
     }
 
@@ -147,4 +161,5 @@ int main() {
 
     // Start app.
     EchoServer srv;
+    srv.run();
 }
