@@ -2,7 +2,7 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
-
+#include "ThorsHammer/hammer.h"
 
 struct connection_data {
     int session;
@@ -159,9 +159,20 @@ void signalHandler( int signum ) {
     write(STDOUT_FILENO, message, sizeof(message));
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     // Handle signals.
     signal(SIGINT, signalHandler);
+
+    // default values
+    int port = 80;
+
+    // Parse command line arguments
+    using ThorsAnvil::Utils::OptionsParser;
+    OptionsParser   options({{"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}}});
+    std::vector<std::string>    files = options.parse(argc, argv);
+    if (files.size() != 0) {
+        options.displayHelp();
+    }
 
     // Start app.
     EchoServer srv;
