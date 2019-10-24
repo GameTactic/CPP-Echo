@@ -157,6 +157,7 @@ void signalHandler( int signum ) {
     message[19] = (hi == 0 ) ? ' ' : char('0' + hi);
     message[20] = char('0' + lo);
     write(STDOUT_FILENO, message, sizeof(message));
+    exit(signum);
 }
 
 int main() {
