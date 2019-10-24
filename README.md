@@ -79,6 +79,7 @@ Any futher messages sent after room selection will be just echo to everybody.
 ## Credits
 
  - [Niko Granö](https://github.com/niko9911)
+ - [Loki Astari](https://github.com/Loki-Astari)
 
 ## License
 
