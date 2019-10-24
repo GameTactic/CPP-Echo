@@ -2,7 +2,7 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
-
+#include "ThorsHammer/hammer.h"
 
 struct connection_data {
     int session;
@@ -44,7 +44,7 @@ using websocketpp::lib::bind;
 class EchoServer
 {
 public:
-    EchoServer()
+    EchoServer(int port = 80)
     {
         // Try to not fail. Please. I have faith on you.
             // Set logging settings
@@ -56,7 +56,7 @@ public:
             _server.set_open_handler(bind(&EchoServer::onOpen,this,::_1));
             _server.set_close_handler(bind(&EchoServer::onClose,this,::_1));
             _server.set_message_handler(bind(&EchoServer::onMessage,this,::_1,::_2));
-            _server.listen(80);
+            _server.listen(port);
 
             // Tell something :)
             std::cout << "Starting GameTactic CPP Echo server...\n";
@@ -159,11 +159,22 @@ void signalHandler( int signum ) {
     write(STDOUT_FILENO, message, sizeof(message));
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     // Handle signals.
     signal(SIGINT, signalHandler);
 
+    // default values
+    int port = 80;
+
+    // Parse command line arguments
+    using ThorsAnvil::Utils::OptionsParser;
+    OptionsParser   options({{"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}}});
+    std::vector<std::string>    files = options.parse(argc, argv);
+    if (files.size() != 0) {
+        options.displayHelp();
+    }
+
     // Start app.
-    EchoServer srv;
+    EchoServer srv(port);
     srv.run();
 }

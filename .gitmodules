@@ -1,0 +1,3 @@
+[submodule "include/ThorsHammer"]
+	path = include/ThorsHammer
+	url = https://github.com/Loki-Astari/ThorsHammer.git

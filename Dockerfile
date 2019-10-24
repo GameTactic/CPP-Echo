@@ -10,6 +10,7 @@ RUN apk update && apk add build-base unzip wget cmake libstdc++ boost-dev git &&
         cd websocketpp-master && \
         cmake . && make -j $(nproc --all) && make install && \
 	cd .. && rm -rf websocketpp-master && \
+	git submodule update --init --recursive && \
 	cmake . && make -j $(nproc --all) && make install && \
         mv bin/server /bin/server && \
 	apk --purge del build-base unzip wget cmake git boost-dev && \
