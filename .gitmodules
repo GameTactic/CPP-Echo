@@ -1,7 +1,6 @@
 [submodule "include/ThorsHammer"]
 	path = include/ThorsHammer
 	url = https://github.com/Loki-Astari/ThorsHammer.git
-
 [submodule "include/websocketpp"]
-        path = include/websocketpp
-        url = https://github.com/zaphoyd/websocketpp.git
+	path = include/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
