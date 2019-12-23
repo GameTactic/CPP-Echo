@@ -2,6 +2,7 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include "ThorsHammer/hammer.h"
 
 struct connection_data {
@@ -38,7 +39,7 @@ using websocketpp::connection_hdl;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
-
+using json = nlohmann::json;
 
 // This class will be heart of our app.
 class EchoServer
@@ -59,7 +60,7 @@ public:
             _server.listen(port);
 
             // Tell something :)
-            std::cout << "Starting GameTactic CPP Echo server...\n";
+            std::cout << "Up & Running GameTactic CPP Echo server...\n";
             std::cout << "--------------------------------------------------------\n";
             std::cout << "|     Copyright 2019 Niko Granö <niko@ironlions.fi>    |\n";
             std::cout << "|                 Licensed under GPLv3.                |\n";
@@ -95,6 +96,15 @@ public:
     void onMessage(connection_hdl conn, message_ptr msg) {
         // Get connection
         connection_ptr ptr = _server.get_con_from_hdl(conn);
+
+        // Try parse JSON input. Return error if required.
+        try {
+            auto input = json::parse(msg->get_payload());
+        } catch (json::exception&) {
+            ptr->send("{\"error\":\"Invalid JSON Syntax.\"}");
+
+            return;
+        }
 
         // Check if client is requesting to join.
         if (msg->get_payload().substr(0,5) == "join:") {
