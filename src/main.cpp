@@ -99,39 +99,53 @@ public:
         connection_ptr ptr = _server.get_con_from_hdl(conn);
 
         // Try parse JSON input. Return error if required.
+        json input;
+        json output;
         try {
-            auto input = json::parse(msg->get_payload());
+            input = json::parse(msg->get_payload());
         } catch (json::exception&) {
-            ptr->send("{\"error\":\"Invalid JSON Syntax.\"}");
+            output["success"] = false;
+            output["error"] = "Invalid JSON Syntax.";
+            ptr->send(output.dump());
 
             return;
         }
 
         // Check if client is requesting to join.
-        if (msg->get_payload().substr(0,5) == "join:") {
-            std::string room = msg->get_payload().substr(5);
+        try {
+            std::string room = input.at("join_room");
             ptr->room = room;
-            std::stringstream ss;
-            ss << "{\"success\":\"Room " << room << " selected.\"}";
-            ptr->send(ss.str());
+            output["success"] = true;
+            ptr->send(output.dump());
 
             return;
+        } catch (json::exception&) {
+            // Do nothing.
         }
 
         if (ptr->room.empty()) {
-            ptr->send("{\"error\":\"No room selected.\"}");
+            output["success"] = false;
+            output["error"] = "No room selected.";
+            ptr->send(output.dump());
 
             return;
         }
+
+        // Build message as defined in https://github.com/GameTactic/CPP-Echo/issues/20
+        output["payload"] = input;
+        std::string stringOutput = output.dump();
 
         try {
             for (auto c : _connections) {
                 connection_ptr _ptr = _server.get_con_from_hdl(c);
                 if (_ptr->room == ptr->room) {
-                    _server.send(c,msg);
+                    _ptr->send(stringOutput);
                 }
             }
         } catch (websocketpp::exception const &e) {
+            output["success"] = false;
+            output["error"] = "Internal Server Error";
+            ptr->send(output.dump());
             std::cout << "Error: " << "(" << e.what() << ")" << std::endl;
         }
     }
@@ -172,7 +186,7 @@ private:
     bool _debug;
 };
 
-// Basic signal hander
+// Basic signal handler.
 void signalHandler( int signum ) {
     static char message[] = "Interrupt signal ( XX ) received.\n";
     int hi = signum / 10;
@@ -187,7 +201,7 @@ int main(int argc, char* argv[]) {
     // Handle signals.
     signal(SIGINT, signalHandler);
 
-    // default values
+    // Default values.
     int port = 80;
     bool debug = false;
 
