@@ -4,7 +4,7 @@ WORKDIR "/compile"
 
 COPY . /compile
 
-RUN apk update && apk add build-base unzip wget cmake libstdc++ boost-dev git && \
+RUN apk update && apk add build-base cmake libstdc++ boost-dev git && \
 	git submodule update --init --recursive && \
 	cmake . && make -j $(nproc --all) && make install && \
         mv bin/server /bin/server && \
