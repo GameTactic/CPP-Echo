@@ -45,7 +45,7 @@ using json = nlohmann::json;
 class EchoServer
 {
 public:
-    EchoServer(int port = 80)
+    EchoServer(int port = 80, bool debug = false)
     {
         // Try to not fail. Please. I have faith on you.
             // Set logging settings
@@ -58,6 +58,7 @@ public:
             _server.set_close_handler(bind(&EchoServer::onClose,this,::_1));
             _server.set_message_handler(bind(&EchoServer::onMessage,this,::_1,::_2));
             _server.listen(port);
+            _debug = debug;
 
             // Tell something :)
             std::cout << "Up & Running GameTactic CPP Echo server...\n";
@@ -140,12 +141,21 @@ public:
         connection_ptr ptr = _server.get_con_from_hdl(conn);
         ptr->session = _session++;
         _connections.insert(conn);
+        logDebug("Websocket connected.");
     }
 
     // Callback to handle closing connection
     void onClose(connection_hdl conn) {
         connection_ptr ptr = _server.get_con_from_hdl(conn);
         _connections.erase(conn);
+        logDebug("Websocket disconnected.");
+    }
+
+    // Echo debug, if it's enabled
+    void logDebug(std::string msg) {
+        if (_debug == true) {
+            std::cout << "[DEBUG]: " << msg << "\n";
+        }
     }
 
 private:
@@ -157,6 +167,9 @@ private:
 
     // Every client has own id to help identify.
     int _session;
+
+    // If debug is true, tell more about data passing trough.
+    bool _debug;
 };
 
 // Basic signal hander
@@ -176,16 +189,21 @@ int main(int argc, char* argv[]) {
 
     // default values
     int port = 80;
+    bool debug = false;
 
-    // Parse command line arguments
+    // Parse command line arguments.
     using ThorsAnvil::Utils::OptionsParser;
-    OptionsParser   options({{"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}}});
+    OptionsParser options(
+    {
+        {"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}},
+        {"debug",'d', "Show debug output in stdout (default false)", [&debug](char const*){debug = true;return false;}}
+    });
     std::vector<std::string>    files = options.parse(argc, argv);
     if (files.size() != 0) {
         options.displayHelp();
     }
 
     // Start app.
-    EchoServer srv(port);
+    EchoServer srv(port, debug);
     srv.run();
 }
