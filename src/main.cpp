@@ -3,6 +3,7 @@
 #include <websocketpp/server.hpp>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <jwt-cpp/jwt.h>
 #include "ThorsHammer/hammer.h"
 
 struct connection_data {
@@ -45,7 +46,7 @@ using json = nlohmann::json;
 class EchoServer
 {
 public:
-    EchoServer(int port = 80, bool debug = false)
+    EchoServer(int port = 80, bool debug = false, std::string jwt = "")
     {
         // Try to not fail. Please. I have faith on you.
             // Set logging settings
@@ -68,10 +69,12 @@ public:
             std::cout << "|                 https://gametactic.eu                |\n";
             std::cout << "--------------------------------------------------------\n";
             if (debug == true) {
-                std::cout << "[NOTICE]: Debug output enabled!!! \n\n";
-            } else {
-                std::cout << "\n";
+                std::cout << "[NOTICE]: Debug output enabled!!!\n";
             }
+            if (jwt == "") {
+                std::cout << "[NOTICE]: Insecure server!!! Please specify JWT private key.\n";
+            }
+            std::cout << "\n";
     }
     void run()
     {
@@ -224,13 +227,15 @@ int main(int argc, char* argv[]) {
     // Default values.
     int port = 80;
     bool debug = false;
+    std::string jwt = "";
 
     // Parse command line arguments.
     using ThorsAnvil::Utils::OptionsParser;
     OptionsParser options(
     {
         {"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}},
-        {"debug",'d', "Show debug output in stdout (default false)", [&debug](char const*){debug = true;return false;}}
+        {"debug",'d', "Show debug output in stdout (default false)", [&debug](char const*){debug = true;return false;}},
+        {"jwt", 'j', "Use JWT for identifying user. Path to private pem. (default empty)", [&jwt](char const* arg){jwt = arg;return true;}}
     });
     std::vector<std::string>    files = options.parse(argc, argv);
     if (files.size() != 0) {
