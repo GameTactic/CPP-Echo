@@ -4,11 +4,11 @@ WORKDIR "/compile"
 
 COPY . /compile
 
-RUN apk update && apk add build-base cmake libstdc++ boost-dev git && \
+RUN apk update && apk add build-base cmake libstdc++ boost-dev openssl-dev git && \
 	git submodule update --init --recursive && \
 	cmake . && make -j $(nproc --all) && make install && \
         mv bin/server /bin/server && \
-	apk --purge del build-base unzip wget cmake git boost-dev && \
+	apk --purge del build-base unzip wget cmake git boost-dev openssl-dev git && \
 	rm -rf /cache/apk/* && cd / && rm -rf /compile
 
 WORKDIR "/"
