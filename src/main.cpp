@@ -9,6 +9,8 @@
 struct connection_data {
     int session;
     std::string room;
+    std::string username;
+    std::string uid;
 };
 
 struct custom_config : public websocketpp::config::asio {
@@ -72,7 +74,11 @@ public:
                 std::cout << "[NOTICE]: Debug output enabled!!!\n";
             }
             if (jwt == "") {
+                _jwt = false;
                 std::cout << "[NOTICE]: Insecure server!!! Please specify JWT private key.\n";
+            } else {
+                _jwt_private_key = jwt;
+                _jwt = true;
             }
             std::cout << "\n";
     }
@@ -116,27 +122,34 @@ public:
             output["error"] = "Invalid JSON Syntax.";
             std::string stringOutput = output.dump();
             std::stringstream debugOutput;
-            debugOutput << "Invalid json given. Sending: " << stringOutput << ".\n";
+            debugOutput << "Invalid json given. Sending: " << stringOutput << ".";
             logDebug(debugOutput.str());
             ptr->send(stringOutput);
 
             return;
         }
 
-        // Check if client is requesting to join.
-        try {
-            std::string room = input.at("join_room");
-            ptr->room = room;
+        std::string room = input.value("join_room", "");
+        std::string inputJwt = input.value("jwt", "");
+        if (room != "") {
+            if (_jwt) { // If JWT Authentication required.
+
+            } else {
+                std::stringstream username_uid;
+                username_uid << "Anonymous_" << random_string();
+                ptr->room = room;
+                ptr->username = username_uid.str();
+                ptr->uid = username_uid.str();
+            }
+
             output["success"] = true;
             std::string stringOutput = output.dump();
             std::stringstream debugOutput;
-            debugOutput << "Joining room " << room << ". Sending: " << stringOutput << ".\n";
+            debugOutput << "Joining room " << room << ". Sending: " << stringOutput << ".";
             logDebug(debugOutput.str());
             ptr->send(stringOutput);
 
             return;
-        } catch (json::exception&) {
-            // Do nothing.
         }
 
         if (ptr->room.empty()) {
@@ -144,7 +157,7 @@ public:
             output["error"] = "No room selected.";
             std::string stringOutput = output.dump();
             std::stringstream debugOutput;
-            debugOutput << "No room selected. Sending: " << stringOutput << ".\n";
+            debugOutput << "No room selected. Sending: " << stringOutput << ".";
             logDebug(debugOutput.str());
             ptr->send(stringOutput);
 
@@ -153,18 +166,28 @@ public:
 
         // Build message as defined in https://github.com/GameTactic/CPP-Echo/issues/20
         output["payload"] = input;
+        output["meta"]["username"] = ptr->username;
+        output["meta"]["uid"] = ptr->uid;
         std::string stringOutput = output.dump();
         std::stringstream debugOutput;
-        debugOutput << "Sending " << stringOutput << " to room " << ptr->room << ".\n";
+        debugOutput << "Sending " << stringOutput << " to room " << ptr->room << ".";
         logDebug(debugOutput.str());
 
         try {
             for (auto c : _connections) {
                 connection_ptr _ptr = _server.get_con_from_hdl(c);
-                if (_ptr->room == ptr->room) {
+                if (_ptr->room == ptr->room && ptr->session != _ptr->session) {
                     _ptr->send(stringOutput);
                 }
             }
+
+            // Send status to client.
+            output.clear();
+            json output;
+            output["success"] = true;
+            std::string stringOutput = output.dump();
+            ptr->send(stringOutput);
+
         } catch (websocketpp::exception const &e) {
             output["success"] = false;
             output["error"] = "Internal Server Error";
@@ -195,12 +218,32 @@ public:
         }
     }
 
+    // Generate random string. Used in uid and username, if not JWT present.
+    std::string random_string(size_t length = 6)
+    {
+        auto randchar = []() -> char
+        {
+            const char charset[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const size_t max_index = (sizeof(charset) - 1);
+            return charset[ rand() % max_index ];
+        };
+        std::string str(length,0);
+        std::generate_n(str.begin(), length, randchar);
+        return str;
+    }
+
 private:
     typedef std::set<connection_hdl,std::owner_less<connection_hdl>> con_list;
 
     // Create a server and list for connections.
     server _server;
     con_list _connections;
+
+    // We need to have JWT public key to verify the key. Bool is used to check if JWT is present.
+    std::string _jwt_private_key;
+    bool _jwt;
 
     // Every client has own id to help identify.
     int _session;
@@ -235,9 +278,9 @@ int main(int argc, char* argv[]) {
     {
         {"port", 'p', "Provide an alternative port number (default 80)", [&port](char const* arg){port = std::atoi(arg);return true;}},
         {"debug",'d', "Show debug output in stdout (default false)", [&debug](char const*){debug = true;return false;}},
-        {"jwt", 'j', "Use JWT for identifying user. Path to private pem. (default empty)", [&jwt](char const* arg){jwt = arg;return true;}}
+        {"jwt", 'j', "Use JWT for identifying user. Path to public pem. (default empty)", [&jwt](char const* arg){jwt = arg;return true;}}
     });
-    std::vector<std::string>    files = options.parse(argc, argv);
+    std::vector<std::string> files = options.parse(argc, argv);
     if (files.size() != 0) {
         options.displayHelp();
     }
