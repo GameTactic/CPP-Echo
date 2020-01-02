@@ -2,6 +2,9 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <streambuf>
 #include <nlohmann/json.hpp>
 #include <jwt-cpp/jwt.h>
 #include "ThorsHammer/hammer.h"
@@ -50,6 +53,14 @@ class EchoServer
 public:
     EchoServer(int port = 80, bool debug = false, std::string jwt = "")
     {
+        if (port <= 0 || port > 65535)
+        {
+            std::cout << "[ERROR]: Invalid port.\n";
+
+            exit(1);
+        }
+        
+
         // Try to not fail. Please. I have faith on you.
             // Set logging settings
             _server.set_access_channels(websocketpp::log::alevel::none);
@@ -64,7 +75,7 @@ public:
             _debug = debug;
 
             // Tell something :)
-            std::cout << "Up & Running GameTactic CPP Echo server...\n";
+            std::cout << "Running GameTactic CPP Echo server...\n";
             std::cout << "--------------------------------------------------------\n";
             std::cout << "|     Copyright 2019 Niko Granö <niko@ironlions.fi>    |\n";
             std::cout << "|                 Licensed under GPLv3.                |\n";
@@ -75,9 +86,20 @@ public:
             }
             if (jwt == "") {
                 _jwt = false;
-                std::cout << "[NOTICE]: Insecure server!!! Please specify JWT private key.\n";
+                std::cout << "[NOTICE]: Insecure server!!! Please specify JWT public key.\n";
             } else {
-                _jwt_private_key = jwt;
+                // Read file into String
+                std::ifstream t(jwt);
+                std::string pub((std::istreambuf_iterator<char>(t)),std::istreambuf_iterator<char>());
+                if (pub == "") {
+                    std::cout << "[ERROR]: Failed to read public key.\n";
+                    _server.stop_listening();
+
+                    exit(1);
+                }
+
+                // Save params
+                _jwt_public_key = pub;
                 _jwt = true;
             }
             std::cout << "\n";
@@ -132,8 +154,23 @@ public:
         std::string room = input.value("join_room", "");
         std::string inputJwt = input.value("jwt", "");
         if (room != "") {
-            if (_jwt) { // If JWT Authentication required.
+            if (_jwt) { // If JWT Authentication required
+                if (inputJwt == "") { // JWT Was not given. Return error.
+                    output["success"] = false;
+                    output["error"] = "JWT token is missing. Please string jwt into the request.";
+                    std::string stringOutput = output.dump();
+                    std::stringstream debugOutput;
+                    debugOutput << "Tried joining room " << room << " without JWT token. Sending error: " << stringOutput << ".";
+                    logDebug(debugOutput.str());
+                    ptr->send(stringOutput);
 
+                    return;
+                }
+
+                // Validate JWT.
+                auto verifier = jwt::verify()
+                        .allow_algorithm(jwt::algorithm::rs256(_jwt_public_key));
+                
             } else {
                 std::stringstream username_uid;
                 username_uid << "Anonymous_" << random_string();
@@ -242,7 +279,7 @@ private:
     con_list _connections;
 
     // We need to have JWT public key to verify the key. Bool is used to check if JWT is present.
-    std::string _jwt_private_key;
+    std::string _jwt_public_key;
     bool _jwt;
 
     // Every client has own id to help identify.
@@ -286,6 +323,6 @@ int main(int argc, char* argv[]) {
     }
 
     // Start app.
-    EchoServer srv(port, debug);
+    EchoServer srv(port, debug, jwt);
     srv.run();
 }
